@@ -94,23 +94,22 @@ Kodlarımızın birbirine girmemesi ve ana projemizin (`main`) bozulmaması içi
 
 ---
 
-## 4. Gelecek Aşamalar İçin Mimari Öneriler (Backend, Veritabanı ve Araçlar)
+#### 📂 Kurulan Backend (API) Klasör Düzeni (`Clothing-price-tracker-api`)
+Başlangıç için masaüstünde ayrı bir klasör olarak C# (.NET Web API) iskeleti de hazır kurulmuştur:
 
-İskeletimiz hazır. Bundan sonraki aşamalarda işimizi en çok kolaylaştıracak ve projeyi profesyonel seviyeye taşıyacak önerilerimiz şunlardır:
-
-### 🗄️ 1. Veritabanı: **PostgreSQL + pgAdmin 4**
-- **Neden PostgreSQL?**
-  - Kıyafetler, markalar, kategoriler, mağazalar (Zara, Bershka, Trendyol, H&M vb.) ve fiyat geçmişi birbiriyle ilişkili tablolardır; PostgreSQL bu ilişkisel yapıyı çok hızlı yönetir.
-  - Kıyafetlerin özellikleri kategoriye göre değişir (ayakkabıda numara `42`, tişörtte beden `S/M/L`, kumaş `%100 Pamuk`). PostgreSQL'in **`JSONB`** özelliği sayesinde her kategori için ayrı tablo açmak yerine bu esnek özellikleri tek bir sütunda tutabiliriz.
-- **Neden pgAdmin 4?**
-  - Veritabanındaki tabloları görsel olarak görmek, veri eklemek ve SQL sorgularını kolayca test etmek için **pgAdmin 4** kullanacağız.
-
-### ⚙️ 2. Backend (API): **C# (.NET 8 Web API)** *(veya Java Spring Boot)*
-- **Önerimiz C# (.NET Web API + Entity Framework Core):**
-  - Kurulumu çok hızlıdır ve **Swagger** (API test ekranı) hazır kurulu gelir.
-  - **Entity Framework Core (EF Core)** sayesinde C# ile yazdığımız sınıflardan PostgreSQL tablolarını otomatik olarak oluşturabiliriz (Migration).
-  - **Swagger** sayesinde Backend'i yazan arkadaşımız bir uç (endpoint) yazdığında, Frontend yazan arkadaşımız tarayıcıdan o adresi görüp anında test edebilir.
-  - *(Alternatif: Eğer ekip üyeleri okul derslerinden dolayı Java'ya daha hakimse **Java Spring Boot** da kullanılabilir.)*
+```text
+Clothing-price-tracker-api/
+├── ClothingPriceTrackerApi.sln          <-- Visual Studio 2022 ile çift tıklayıp açacağımız ana dosya
+└── ClothingPriceTracker.Api/
+    ├── Controllers/
+    │   └── ProductsController.cs        <-- Test amaçlı "Merhaba" döndüren örnek endpoint (/api/products)
+    ├── Models/                          <-- Kıyafet, Mağaza, Fiyat sınıflarını koyacağımız klasör
+    ├── Services/                        <-- İş mantığı ve fiyat karşılaştırma servisleri klasörü
+    ├── Data/                            <-- İleride PostgreSQL (DbContext) bağlantısını koyacağımız klasör
+    ├── Program.cs                       <-- Otomatik Swagger açan ayar + CORS izni
+    └── ClothingPriceTracker.Api.csproj  <-- Proje ve paket (Swashbuckle) dosyası
+```
+> **Not:** API projesi tamamen ayrı bir klasörde olduğu için, API'yi çalıştırmadan da Frontend (`Clothing-price-tracker-frontend`) üzerinde `npm run dev` ile bağımsız olarak çalışabilirsiniz. API'yi çalıştırmak istediğinizde `ClothingPriceTrackerApi.sln` dosyasını Visual Studio 2022'de açıp **Play** tuşuna basmanız (veya terminalde `dotnet run --project ClothingPriceTracker.Api` yazmanız) yeterlidir; tarayıcıda otomatik olarak `/swagger` ekranı açılacaktır.
 
 ### 📦 3. Frontend İçin Kuracağımız Yardımcı Paketler
 1. **`axios` (`src/services/api.ts` için):**
@@ -123,3 +122,128 @@ Kodlarımızın birbirine girmemesi ve ana projemizin (`main`) bozulmaması içi
 ### 🤖 4. Mağazalardan Fiyat Çekme (Veri Kaynağı / Web Scraping)
 - **1. Adım (Başlangıç - Seed Data):** Arayüzü ve API'yi geliştirirken mağazalardan gerçek zamanlı veri çekmeyi beklememek için veritabanına hazır örnek kıyafet ve fiyat verileri (Seed Data) ekleyeceğiz.
 - **2. Adım (Fiyat Botu / Scraper):** Sistem tamamlandığında mağazalardaki (Zara, Pull&Bear, Trendyol vb.) güncel fiyatları çekmek için **Python (Playwright / BeautifulSoup)** veya **C# (HtmlAgilityPack / PuppeteerSharp)** ile küçük bir bot yazıp veritabanındaki fiyatları otomatik güncelleyeceğiz.
+
+---
+
+## 4. API Nedir, Neden Kuruyoruz ve Nasıl Çalışır? (Detaylı Rehber)
+
+### 🍽️ 1. Neden API'ye İhtiyacımız Var? (React Tek Başına Yetmez mi?)
+Sitemizi bir restoran gibi düşünebiliriz:
+- **React (Frontend):** Restoranın **müşteri salonu ve menüsüdür**. Çok şıktır ama mutfağa girip yemek pişiremez.
+- **PostgreSQL (Veritabanı):** Restoranın **kilitli erzak deposudur**. Tüm kıyafetler, mağazalar ve fiyatlar burada durur.
+- **C# Web API (Backend):** Müşteri ile mutfak/depo arasındaki **garsondur**.
+
+**Peki neden React doğrudan PostgreSQL veritabanına bağlanamaz?**
+1. **Güvenlik (En Önemli Sebep):** React kodları kullanıcının tarayıcısında (Chrome'da) çalışır. Siteye giren herhangi biri klavyeden `F12` tuşuna basıp yazılan tüm React kodlarını görebilir. Veritabanı şifresini React'in içine yazarsak, siteye giren herkes şifreyi görür ve bütün tabloları silebilir! API ise sunucuda (arka planda) kapalı çalışır; kimse API'nin içindeki şifreleri göremez.
+2. **Ağır İşlemler ve Kurallar:** Örneğin binlerce kıyafet arasından *"En ucuz 10 Zara montu bul, son 30 gündeki fiyat indirim oranını hesapla"* işlemini kullanıcının telefonuna/tarayıcısına yaptırırsak site donar. Bu hesaplamayı C# API saniyenin binde birinde yapıp React'e sadece hazır sonucu (JSON listesini) gönderir.
+3. **Fiyat Çekme Botu (Scraper):** Tarayıcıdaki React, güvenlik kısıtlamaları nedeniyle Trendyol veya Zara'nın sitesinden doğrudan fiyat çekemez. Ancak arka planda çalışan C# API'miz istediği siteden fiyatları çekip veritabanına kaydedebilir.
+
+---
+
+### 🧪 2. Swagger Nedir? Ne İşe Yarar?
+Normalde bir API yazdığımızda onun ekranı, butonu veya rengi yoktur; sadece arka planda çalışan görünmez bir programdır.
+- C# ile *"Kıyafetleri getiren bir kod (`ProductsController`)"* yazdığımızda, **daha React sayfasını yapmadan bu kodun doğru çalışıp çalışmadığını nasıl deneyeceğiz?**
+- İşte **Swagger**, yazdığımız görünmez C# API uçlarını (endpoint'lerini) otomatik olarak okur ve bize tarayıcıda **hazır, butonlu bir test sayfası** üretir!
+- Swagger sayfasına girip `GET /api/Products` kutusuna tıklayarak **"Try it out -> Execute"** butonuna bastığımızda API'nin ne cevap döndürdüğünü anında görebiliriz.
+- Ayrıca ekipte React sayfasını yapan arkadaşımız *"Ürünleri çekmek için hangi adrese istek atacağım?"* diye sormak zorunda kalmaz; Swagger ekranını açıp tüm adresleri oradan görür ve test eder.
+
+---
+
+### 🔍 3. API'nin Kontak Anahtarı: `Program.cs` Satır Satır Ne Yapıyor?
+`Program.cs` dosyası, C# API ilk çalıştığında okunan ana başlatıcı dosyadır:
+
+#### A) Hazırlık Kısmı (Servisleri Ekleme)
+```csharp
+var builder = WebApplication.CreateBuilder(args);
+
+builder.Services.AddControllers();          // 1. "Projede Controller'lar (ProductsController gibi) olacak, bunları tanı" der.
+builder.Services.AddEndpointsApiExplorer(); // 2. API'deki tüm adresleri (/api/products vb.) keşfetmesini sağlar.
+builder.Services.AddSwaggerGen();           // 3. Keşfedilen bu adreslerden Swagger test sayfasını üretir.
+```
+
+#### B) CORS İzni (React ile API'nin Konuşabilmesi İçin)
+```csharp
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowFrontend", policy =>
+    {
+        policy.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod();
+    });
+});
+// React (localhost:5173) ile C# API farklı portlarda çalıştığı için, API'nin React'ten gelen isteklere izin vermesini sağlar.
+```
+
+#### C) Swagger Ekranını Aktif Etme
+```csharp
+var app = builder.Build();
+
+app.UseSwagger();
+app.UseSwaggerUI(c =>
+{
+    c.RoutePrefix = "swagger"; // Tarayıcıda adresin sonuna /swagger yazılınca bu ekran açılsın der.
+    c.SwaggerEndpoint("/swagger/v1/swagger.json", "Clothing Price Tracker API v1");
+});
+```
+
+#### D) Otomatik Tarayıcı Açma Kodu
+Normalde projeyi çalıştırdığımızda tarayıcıyı elimizle açıp adresi yazmamız gerekir. Aşağıdaki kod ise **API başlar başlamaz varsayılan tarayıcıyı (Chrome) otomatik açıp `/swagger` sayfasına yönlendirir**:
+```csharp
+app.Lifetime.ApplicationStarted.Register(() =>
+{
+    var baseUrl = app.Urls.FirstOrDefault(); // Çalıştığı adresi bul (örn: http://localhost:5120)
+    if (string.IsNullOrWhiteSpace(baseUrl)) return;
+
+    var swaggerUrl = baseUrl.TrimEnd('/') + "/swagger"; // Sonuna /swagger ekle
+    try { Process.Start(new ProcessStartInfo(swaggerUrl) { UseShellExecute = true }); } // Otomatik Chrome'da aç!
+    catch { }
+});
+```
+
+#### E) Çalıştırma Kısmı
+```csharp
+app.UseCors("AllowFrontend"); // React'ten gelen isteklere izin politikasını devreye sokar.
+app.UseHttpsRedirection();    // Güvenli bağlantıya yönlendirir.
+app.MapControllers();         // Gelen istekleri ilgili Controller'a (örn: ProductsController) bağlar.
+app.Run();                    // Ve garsonu (API'yi) nöbete başlatır!
+```
+
+---
+
+### 🖥️ 4. API Projesi GitHub Deposu ve Visual Studio 2022 Kullanımı
+
+API projemiz **`.NET 8.0` (`net8.0`)** sürümüne sabitlenmiş (tüm Visual Studio 2022 sürümleriyle %100 uyumlu olması için) ve ayrı bir GitHub deposuna yüklenmiştir:
+- **Backend (API) GitHub Linki:** `https://github.com/AnilTutal/clothing-price-tracker-api`
+- Tıpkı Frontend projesinde olduğu gibi API deposunda da **`main`**, **`anil`**, **`sena`**, **`irem`** ve **`berkay`** branch'leri hazır açılmıştır. *(İleride kullanılmayan branch olursa GitHub'daki `branches` sekmesinden tek tıkla silinebilir).*
+
+#### Visual Studio 2022'de API Nasıl Çalıştırılır?
+1. `Clothing-price-tracker-api` klasöründeki **`ClothingPriceTrackerApi.sln`** dosyasına çift tıklayarak Visual Studio 2022'de açın.
+2. Üst menünün ortasındaki yeşil **`https` (Play)** tuşuna (veya klavyeden **`F5`** tuşuna) basın.
+3. Proje derlenecek ve otomatik olarak Chrome'da **`/swagger`** test ekranı açılacaktır. Durdurmak için üstteki **kırmızı kare (Stop)** butonuna basabilirsiniz.
+
+#### Visual Studio 2022'de Git ve Branch İşlemleri Nasıl Yapılır?
+- **Dal (Branch) Değiştirme:** Visual Studio 2022 penceresinin **en sağ alt köşesindeki** dal ismine (`main` / `anil`) tıklayarak açılan listeden kendi isminizi (`anil`, `sena`, `irem`, `berkay`) seçebilirsiniz.
+- **Kod Gönderme (Commit & Push):**
+  - Üst menüden **`Git` -> `Git Değişiklikleri` (Git Changes)** seçeneğine tıklayın.
+  - Bu pencereyi başlığından sürükleyip sağ taraftaki **Çözüm Gezgini / Özellikler** panelinin yanına veya altına sabitleyebilirsiniz.
+  - Yaptığınız değişiklik için kutuya kısa bir açıklama yazıp **"Tümünü İşle" (Commit All)** butonuna, ardından hemen yanındaki **Yukarı Ok (`↑` Push / Gönder)** butonuna basarak kodunuzu hiç terminal komutu yazmadan GitHub'a gönderebilirsiniz.
+
+
+
+
+## 4. Gelecek Aşamalar İçin Mimari Öneriler (Backend, Veritabanı ve Araçlar)
+
+İskeletimiz hazır. Bundan sonraki aşamalarda işimizi en çok kolaylaştıracak ve projeyi profesyonel seviyeye taşıyacak önerilerimiz şunlardır:
+
+### 🗄️ 1. Veritabanı: **PostgreSQL + pgAdmin 4**
+- **Neden PostgreSQL?**
+  - Kıyafetler, markalar, kategoriler, mağazalar (Zara, Bershka, Trendyol, H&M vb.) ve fiyat geçmişi birbiriyle ilişkili tablolardır; PostgreSQL bu ilişkisel yapıyı çok hızlı yönetir.
+  - Kıyafetlerin özellikleri kategoriye göre değişir (ayakkabıda numara `42`, tişörtte beden `S/M/L`, kumaş `%100 Pamuk`). PostgreSQL'in **`JSONB`** özelliği sayesinde her kategori için ayrı tablo açmak yerine bu esnek özellikleri tek bir sütunda tutabiliriz.
+- **Neden pgAdmin 4?**
+  - Veritabanındaki tabloları görsel olarak görmek, veri eklemek ve SQL sorgularını kolayca test etmek için **pgAdmin 4** kullanacağız.
+
+### ⚙️ 2. Backend (API): **C# (.NET Web API)** *(veya Java Spring Boot)*
+- **Önerimiz C# (.NET Web API + Entity Framework Core):**
+  - Kurulumu çok hızlıdır ve **Swagger** (API test ekranı) hazır kurulu gelir.
+  - **Entity Framework Core (EF Core)** sayesinde C# ile yazdığımız sınıflardan PostgreSQL tablolarını otomatik olarak oluşturabiliriz (Migration).
+  - **Swagger** sayesinde Backend'i yazan arkadaşımız bir uç (endpoint) yazdığında, Frontend yazan arkadaşımız tarayıcıdan o adresi görüp anında test edebilir.
+  - *(Alternatif: Eğer ekip üyeleri okul derslerinden dolayı Java'ya daha hakimse **Java Spring Boot** da kullanılabilir.)*
