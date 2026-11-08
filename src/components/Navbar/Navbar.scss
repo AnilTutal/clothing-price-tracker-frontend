@@ -1,0 +1,48 @@
+@use '../../styles/variables' as *;
+
+.navbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 2rem;
+  background-color: #ffffff;
+  border-bottom: 1px solid $border-color;
+
+  &__links {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+  }
+
+  &__link {
+    font-weight: 500;
+    color: $text-color;
+
+    &.active,
+    &:hover {
+      color: $primary-color;
+    }
+  }
+
+  &__lang {
+    display: flex;
+    gap: 0.5rem;
+
+    &-btn {
+      padding: 0.25rem 0.6rem;
+      border: 1px solid $border-color;
+      border-radius: 4px;
+      background: transparent;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 0.85rem;
+      color: $text-color;
+
+      &.active {
+        background-color: $primary-color;
+        color: #ffffff;
+        border-color: $primary-color;
+      }
+    }
+  }
+}
