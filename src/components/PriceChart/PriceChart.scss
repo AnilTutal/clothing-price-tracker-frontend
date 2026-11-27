@@ -1,0 +1,11 @@
+@use '../../styles/variables' as *;
+
+.price-chart {
+  width: 100%;
+  height: auto;
+
+  .grid { stroke: $border-color; stroke-dasharray: 4 4; }
+  .label { fill: var(--muted); font-size: 11px; }
+  .line { fill: none; stroke: $primary-color; stroke-width: 2.5; stroke-linejoin: round; }
+  .dot { fill: var(--surface); stroke: $primary-color; stroke-width: 2; }
+}

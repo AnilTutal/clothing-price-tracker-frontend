@@ -1,4 +1,5 @@
+// Renkler CSS değişkenlerinden gelir; açık/koyu tema src/styles/global.scss içinde tanımlıdır.
 $primary-color: #2563eb;
-$text-color: #1f2937;
-$bg-color: #f9fafb;
-$border-color: #e5e7eb;
+$text-color: var(--text-color);
+$bg-color: var(--bg-color);
+$border-color: var(--border-color);

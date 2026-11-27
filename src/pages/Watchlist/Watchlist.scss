@@ -1,0 +1,89 @@
+@use '../../styles/variables' as *;
+
+.watchlist-page {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 2rem 1.25rem 4rem;
+
+  h1 { margin: 0 0 0.25rem; color: $text-color; }
+  header p { color: var(--muted); }
+}
+
+.watchlist-empty {
+  margin-top: 3rem;
+  text-align: center;
+  color: var(--muted);
+
+  span { font-size: 3.5rem; color: #d1d5db; }
+}
+
+.watchlist-btn {
+  display: inline-block;
+  margin-top: 0.5rem;
+  padding: 0.7rem 1.5rem;
+  border-radius: 999px;
+  background: $primary-color;
+  color: #fff;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.watchlist-grid {
+  margin-top: 1.5rem;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 1.25rem;
+}
+
+.watchlist-card {
+  position: relative;
+  background: var(--surface);
+  border: 1px solid $border-color;
+  border-radius: 16px;
+  overflow: hidden;
+
+  img {
+    width: 100%;
+    aspect-ratio: 3 / 4;
+    object-fit: cover;
+    display: block;
+    background: var(--surface-alt);
+  }
+
+  &__remove {
+    position: absolute;
+    top: 0.6rem;
+    right: 0.6rem;
+    z-index: 2;
+    width: 36px;
+    height: 36px;
+    border: none;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.95);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    color: #ef4444;
+    font-size: 1.2rem;
+    cursor: pointer;
+  }
+
+  &__body {
+    padding: 0.9rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+
+    small { color: var(--muted); }
+    h3 { margin: 0; font-size: 0.95rem; color: $text-color; }
+    strong { color: $primary-color; }
+  }
+
+  &__hint { font-size: 0.72rem; }
+
+  &__actions {
+    display: flex;
+    gap: 1rem;
+    margin-top: 0.5rem;
+
+    a { color: $primary-color; text-decoration: none; font-weight: 600; font-size: 0.9rem; }
+  }
+}
